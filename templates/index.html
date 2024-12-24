@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MNIST Digit Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        #result {
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: none;
+        }
+        #preview {
+            max-width: 280px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>MNIST Digit Recognition</h1>
+    
+    <div class="upload-section">
+        <h2>Upload Digit Image</h2>
+        <input type="file" id="imageInput" accept=".jpg,.jpeg,.png">
+        <br>
+        <img id="preview" style="display: none;">
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+
+                // Send to server
+                const formData = new FormData();
+                formData.append('file', file);
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.style.display = 'block';
+                    if (data.success) {
+                        resultDiv.innerHTML = `Prediction: ${data.prediction}<br>Confidence: ${data.confidence}%`;
+                    } else {
+                        resultDiv.innerHTML = `Error: ${data.error}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('result').innerHTML = 'Error processing request';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
